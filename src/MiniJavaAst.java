@@ -38,23 +38,7 @@ public class MiniJavaAst {
 			return new IdentifierType(context.classType().identifier().getText());
 		}
 		else {
-			throw new Exception("Invalid type": context);
-		}
-	}
-	
-	public static Identifier getIdentifier(iclParser.IdentifierContext context) {
-		return new Identifier(context.getText());
-	}
-	
-	public static Statement getStatement(iclParser.StatementContext context) {
-		if (context.blockStatement() != null) {
-			return getBlockStatement(context.blockStatement());
-		}
-		else if (context.ifStatement() != null) {
-			return getIfStatement(context.ifStatement());
-		}
-		else {
-			return null;
+			throw new RuntimeException("Invalid type:" + context);
 		}
 	}
 	
@@ -69,6 +53,50 @@ public class MiniJavaAst {
 	
 	public static If getIfStatement(iclParser.IfStatementContext context) {
 		return new If(getExpression(context.expression()), getStatement(context.statement(0)), getStatement(context.statement(1)));
+	}
+	
+	public static While getWhileStatement(iclParser.WhileStatementContext context) {
+		return new While(getExpression(context.expression()), getStatement(context.statement()));
+	}
+	
+	public static Print getPrintStatement(iclParser.PrintlnStatementContext context) {
+		return new Print(getExpression(context.expression()));
+	}
+	
+	public static Assign getAssignStatement(iclParser.AssignmentStatementContext context) {
+		return new Assign(getIdentifier(context.identifier()), getExpression(context.expression()));
+	}
+	
+	public static ArrayAssign getArrayAssignStatement(iclParser.ArrAssignStatementContext context) {
+		return new ArrayAssign(getIdentifier(context.identifier()), getExpression(context.expression(0)), getExpression(context.expression(1)));
+	}
+	
+	public static Statement getStatement(iclParser.StatementContext context) {
+		if (context.blockStatement() != null) {
+			return getBlockStatement(context.blockStatement());
+		}
+		else if (context.ifStatement() != null) {
+			return getIfStatement(context.ifStatement());
+		}
+		else if (context.whileStatement() != null) {
+			return getWhileStatement(context.whileStatement());
+		}
+		else if (context.printlnStatement() != null) {
+			return getPrintStatement(context.printlnStatement());
+		}
+		else if (context.assignmentStatement() != null) {
+			return getAssignStatement(context.assignmentStatement());
+		}
+		else if (context.arrAssignStatement() != null) {
+			return getArrayAssignStatement(context.arrAssignStatement());
+		}
+		else {
+			throw new RuntimeException("Invalid statement: " + context);
+		}
+	}
+	
+	public static Identifier getIdentifier(iclParser.IdentifierContext context) {
+		return new Identifier(context.getText());
 	}
 	
 	public static ClassDeclList getClassDeclList() {
