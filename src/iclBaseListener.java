@@ -304,6 +304,18 @@ public class iclBaseListener implements iclListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterFormal(@NotNull iclParser.FormalContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFormal(@NotNull iclParser.FormalContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterWhileStatement(@NotNull iclParser.WhileStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}

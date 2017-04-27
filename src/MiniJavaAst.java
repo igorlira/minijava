@@ -5,7 +5,7 @@ import ast.*;
 public class MiniJavaAst {
 	public static Program getProgram(iclParser.ProgramContext context) {
 		MainClass mainClass = getMainClass(context.mainClass());
-		ClassDeclList classDeclList = getClassDeclList();
+		ClassDeclList classDeclList = getClassDeclList(context.classDeclaration());
 		
 		return new Program(mainClass, classDeclList);
 	}
@@ -15,15 +15,24 @@ public class MiniJavaAst {
 	}
 	
 	public static ClassDecl getClassDecl(iclParser.ClassDeclarationContext context) {
-		return null;
+		if (context.identifier().size() > 1) {
+			return new ClassDeclExtends(getIdentifier(context.identifier(0)), getIdentifier(context.identifier(1)), getVarDeclList(context.varDeclaration()), getMethodDeclList(context.methodDeclaration()));
+		}
+		else {
+			return new ClassDeclSimple(getIdentifier(context.identifier(0)), getVarDeclList(context.varDeclaration()), getMethodDeclList(context.methodDeclaration()));
+		}
 	}
 	
 	public static VarDecl getVarDecl(iclParser.VarDeclarationContext context) {
-		return null;
+		return new VarDecl(getType(context.type()), getIdentifier(context.identifier()));
 	}
 	
 	public static MethodDecl getMethodDecl(iclParser.MethodDeclarationContext context) {
-		return null;
+		FormalList formalList = getFormalList(context.formal());
+		VarDeclList varDeclList = getVarDeclList(context.varDeclaration());
+		StatementList statementList = getStatementList(context.statement());
+		
+		return new MethodDecl(getType(context.type()), getIdentifier(context.identifier()), formalList, varDeclList, statementList, getExpression(context.expression()));
 	}
 	
 	public static Type getType(iclParser.TypeContext context) {
@@ -179,14 +188,55 @@ public class MiniJavaAst {
 		return new Identifier(context.getText());
 	}
 	
-	public static ClassDeclList getClassDeclList() {
-		return null;
+	public static ClassDeclList getClassDeclList(List<iclParser.ClassDeclarationContext> list) {
+		ClassDeclList result = new ClassDeclList();
+		for (iclParser.ClassDeclarationContext expr : list) {
+			result.addElement(getClassDecl(expr));
+		}
+		
+		return result;
 	}
 	
 	public static ExpList getExpressionList(List<iclParser.ExpressionContext> list) {
 		ExpList result = new ExpList();
 		for (iclParser.ExpressionContext expr : list) {
 			result.addElement(getExpression(expr));
+		}
+		
+		return result;
+	}
+	
+	public static FormalList getFormalList(List<iclParser.FormalContext> list) {
+		FormalList result = new FormalList();
+		for (iclParser.FormalContext formal : list) {
+			result.addElement(new Formal(getType(formal.type()), getIdentifier(formal.identifier())));
+		}
+		
+		return result;
+	}
+	
+	public static VarDeclList getVarDeclList(List<iclParser.VarDeclarationContext> list) {
+		VarDeclList result = new VarDeclList();
+		for (iclParser.VarDeclarationContext varDecl : list) {
+			result.addElement(getVarDecl(varDecl));
+		}
+		
+		return result;
+	}
+	
+	public static StatementList getStatementList(List<iclParser.StatementContext> list) {
+		StatementList result = new StatementList();
+		for (iclParser.StatementContext context : list) {
+			result.addElement(getStatement(context));
+		}
+		
+		return result;
+	}
+	
+	public static MethodDeclList getMethodDeclList(List<iclParser.MethodDeclarationContext> list) {
+		MethodDeclList result = new MethodDeclList();
+		for (iclParser.MethodDeclarationContext context : list) {
+			result.addElement(getMethodDecl(context));
 		}
 		
 		return result;
