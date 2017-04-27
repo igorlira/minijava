@@ -1,6 +1,7 @@
 import java.util.Scanner;
 
 import ast.*;
+import visitor.PrettyPrintVisitor;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -14,9 +15,8 @@ public class TesteMiniJava {
 		CommonTokenStream tokenStream = new CommonTokenStream(lexer);
 		
 		iclParser parser = new iclParser(tokenStream);
-		iclParser.ProgramContext programCtx = parser.program();
 		
-		Program program = MiniJavaAst.getProgram(programCtx);
-		System.out.println(program.toString());
+		Program program = MiniJavaAst.getProgram(parser.program());
+		program.accept(new PrettyPrintVisitor());
 	}
 }
