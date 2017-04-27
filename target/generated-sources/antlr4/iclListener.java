@@ -248,6 +248,16 @@ public interface iclListener extends ParseTreeListener {
 	 */
 	void exitVarDeclaration(@NotNull iclParser.VarDeclarationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link iclParser#formal}.
+	 * @param ctx the parse tree
+	 */
+	void enterFormal(@NotNull iclParser.FormalContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link iclParser#formal}.
+	 * @param ctx the parse tree
+	 */
+	void exitFormal(@NotNull iclParser.FormalContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link iclParser#whileStatement}.
 	 * @param ctx the parse tree
 	 */

@@ -8,7 +8,8 @@ classDeclaration: 	'class' identifier ('extends' identifier)? '{' (varDeclaratio
 
 varDeclaration: 	type identifier ';';
 
-methodDeclaration: 	'public' type identifier '(' (type identifier (',' type identifier)*)? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}';
+formal: type identifier;
+methodDeclaration: 	'public' type identifier '(' (formal (',' formal)*)? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}';
 
 intArrayType:		'int' '[' ']';
 booleanType:		'boolean';
