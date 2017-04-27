@@ -28,6 +28,16 @@ public interface iclListener extends ParseTreeListener {
 	 */
 	void exitMethodDeclaration(@NotNull iclParser.MethodDeclarationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link iclParser#booleanType}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanType(@NotNull iclParser.BooleanTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link iclParser#booleanType}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanType(@NotNull iclParser.BooleanTypeContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link iclParser#blockStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -67,6 +77,26 @@ public interface iclListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAssignmentStatement(@NotNull iclParser.AssignmentStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link iclParser#intType}.
+	 * @param ctx the parse tree
+	 */
+	void enterIntType(@NotNull iclParser.IntTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link iclParser#intType}.
+	 * @param ctx the parse tree
+	 */
+	void exitIntType(@NotNull iclParser.IntTypeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link iclParser#intArrayType}.
+	 * @param ctx the parse tree
+	 */
+	void enterIntArrayType(@NotNull iclParser.IntArrayTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link iclParser#intArrayType}.
+	 * @param ctx the parse tree
+	 */
+	void exitIntArrayType(@NotNull iclParser.IntArrayTypeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link iclParser#program}.
 	 * @param ctx the parse tree
@@ -157,4 +187,14 @@ public interface iclListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitPrintlnStatement(@NotNull iclParser.PrintlnStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link iclParser#classType}.
+	 * @param ctx the parse tree
+	 */
+	void enterClassType(@NotNull iclParser.ClassTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link iclParser#classType}.
+	 * @param ctx the parse tree
+	 */
+	void exitClassType(@NotNull iclParser.ClassTypeContext ctx);
 }

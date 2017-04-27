@@ -10,10 +10,15 @@ varDeclaration: 	type identifier ';';
 
 methodDeclaration: 	'public' type identifier '(' (type identifier (',' type identifier)*)? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}';
 
-type: 				'int' '[' ']' |
-					'boolean' |
-					'int' |
-					identifier;
+intArrayType:		'int' '[' ']';
+booleanType:		'boolean';
+intType:			'int';
+classType:			identifier;
+
+type: 				intArrayType |
+					booleanType |
+					intType |
+					classType;
 
 blockStatement:		'{' (statement)* '}';
 ifStatement:		'if' '(' expression ')' statement 'else' statement;
