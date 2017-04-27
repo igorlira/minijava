@@ -33,20 +33,34 @@ statement:			blockStatement |
 					printlnStatement |
 					assignmentStatement |
 					arrAssignStatement;
+					
+compareExpression:	('&&' | '<' | '+' | '-' | '*') expression;
+arrAccessExpr:		'[' expression ']';
+lengthExpression:	'.' 'length';
+callExpression:		'.' identifier '(' (expression (',' expression)*)? ')';
+intLiteralExpr:		INTEGER_LITERAL;
+trueExpr:			'true';
+falseExpr:			'false';
+identifierExpr:		identifier;
+thisExpr:			'this';
+newIntArrExpr:		'new' 'int' '[' expression ']';
+newExpr:			'new' identifier '(' ')';
+negationExpr:		'!' expression;
+parExpr:			'(' expression ')';
 
-expression:			expression ('&&' | '<' | '+' | '-' | '*') expression |
-					expression '[' expression ']' |
-					expression '.' 'length' |
-					expression '.' identifier '(' (expression (',' expression)*)? ')' |
-					INTEGER_LITERAL |
-					'true' |
-					'false' |
-					identifier |
-					'this' |
-					'new' 'int' '[' expression ']' |
-					'new' identifier '(' ')' |
-					'!' expression |
-					'(' expression ')';
+expression:			expression compareExpression |
+					expression arrAccessExpr |
+					expression lengthExpression |
+					expression callExpression |
+					intLiteralExpr |
+					trueExpr |
+					falseExpr |
+					identifierExpr |
+					thisExpr |
+					newIntArrExpr |
+					newExpr |
+					negationExpr |
+					parExpr;
 
 identifier:			IDENTIFIER;
 
