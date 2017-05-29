@@ -12,6 +12,7 @@ import ast.Assign;
 import ast.Block;
 import ast.BooleanType;
 import ast.Call;
+import ast.ClassDecl;
 import ast.ClassDeclExtends;
 import ast.ClassDeclSimple;
 import ast.False;
@@ -26,6 +27,7 @@ import ast.IntegerType;
 import ast.LessThan;
 import ast.MainClass;
 import ast.MethodDecl;
+import ast.MethodDeclList;
 import ast.Minus;
 import ast.NewArray;
 import ast.NewObject;
@@ -37,6 +39,7 @@ import ast.This;
 import ast.Times;
 import ast.True;
 import ast.VarDecl;
+import ast.VarDeclList;
 import ast.While;
 
 public class BuildSymbolTableVisitor implements Visitor {
@@ -68,6 +71,10 @@ public class BuildSymbolTableVisitor implements Visitor {
 	public void visit(MainClass n) {
 		n.i1.accept(this);
 		n.i2.accept(this);
+		
+		//this.symbolTable.addClass(n.i1.s, null);
+		//this.currClass = this.symbolTable.getClass(n.i1.s);
+		
 		n.s.accept(this);
 	}
 
@@ -76,12 +83,22 @@ public class BuildSymbolTableVisitor implements Visitor {
 	// MethodDeclList ml;
 	public void visit(ClassDeclSimple n) {
 		n.i.accept(this);
+		
+		if (!this.symbolTable.addClass(n.i.s, null)) {
+			System.out.println();
+			throw new RuntimeException("Class " + n.i.s + " already defined");
+		}
+		this.currClass = this.symbolTable.getClass(n.i.s);
+		this.currMethod = null;
+		
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
 		}
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		this.currClass = null;
 	}
 
 	// Identifier i;
@@ -91,12 +108,22 @@ public class BuildSymbolTableVisitor implements Visitor {
 	public void visit(ClassDeclExtends n) {
 		n.i.accept(this);
 		n.j.accept(this);
+		
+		if (!this.symbolTable.addClass(n.i.s, n.j.s)) {
+			System.out.println();
+			throw new RuntimeException("Class " + n.i.s + " already defined");
+		}
+		this.currClass = this.symbolTable.getClass(n.i.s);
+		this.currMethod = null;
+		
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
 		}
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		this.currClass = null;
 	}
 
 	// Type t;
@@ -104,6 +131,23 @@ public class BuildSymbolTableVisitor implements Visitor {
 	public void visit(VarDecl n) {
 		n.t.accept(this);
 		n.i.accept(this);
+		
+		if (this.currMethod != null) {
+			if (!this.currMethod.addVar(n.i.s, n.t)) {
+				System.out.println();
+				throw new RuntimeException("Variable " + n.i.s + " already defined in method " + this.currClass.getId() + "::" + this.currMethod.getId());
+			}
+		}
+		else if (this.currClass != null) {
+			if (!this.currClass.addVar(n.i.s, n.t)) {
+				System.out.println();
+				throw new RuntimeException("Variable " + n.i.s + " already defined in class " + this.currClass.getId());
+			}
+		}
+		else {
+			System.out.println();
+			throw new RuntimeException("currClass=null and currMethod=null while visiting(VarDecl)");
+		}
 	}
 
 	// Type t;
@@ -115,9 +159,23 @@ public class BuildSymbolTableVisitor implements Visitor {
 	public void visit(MethodDecl n) {
 		n.t.accept(this);
 		n.i.accept(this);
+		
+		if (this.currClass != null) {
+			if (!this.currClass.addMethod(n.i.s, n.t)) {
+				System.out.println();
+				throw new RuntimeException("Method " + n.i.s + " already defined in class " + this.currClass.getId());
+			}
+			this.currMethod = this.currClass.getMethod(n.i.s);
+		}
+		else {
+			System.out.println();
+			throw new RuntimeException("currClass=null while visiting(MethodDecl)");
+		}
+		
 		for (int i = 0; i < n.fl.size(); i++) {
 			n.fl.elementAt(i).accept(this);
 		}
+		
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
 		}
@@ -125,6 +183,8 @@ public class BuildSymbolTableVisitor implements Visitor {
 			n.sl.elementAt(i).accept(this);
 		}
 		n.e.accept(this);
+		
+		this.currMethod = null;
 	}
 
 	// Type t;
@@ -132,6 +192,13 @@ public class BuildSymbolTableVisitor implements Visitor {
 	public void visit(Formal n) {
 		n.t.accept(this);
 		n.i.accept(this);
+		
+		if (this.currMethod != null) {
+			if (!this.currMethod.addParam(n.i.s, n.t)) {
+				System.out.println();
+				throw new RuntimeException("Formal " + n.i.s + " already defined in method " + this.currClass.getId() + "::" + this.currMethod.getId());
+			}
+		}
 	}
 
 	public void visit(IntArrayType n) {

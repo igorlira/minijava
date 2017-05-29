@@ -1,6 +1,7 @@
 import java.util.Scanner;
 
 import ast.*;
+import visitor.BuildSymbolTableVisitor;
 import visitor.PrettyPrintVisitor;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -17,6 +18,7 @@ public class TesteMiniJava {
 		iclParser parser = new iclParser(tokenStream);
 		
 		Program program = MiniJavaAst.getProgram(parser.program());
-		program.accept(new PrettyPrintVisitor());
+		program.accept(new BuildSymbolTableVisitor());
+		//program.accept(new PrettyPrintVisitor());
 	}
 }
