@@ -1,6 +1,10 @@
 package visitor;
 
 import symboltable.SymbolTable;
+import symboltable.Variable;
+
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import ast.And;
 import ast.ArrayAssign;
 import ast.ArrayLength;
@@ -36,12 +40,16 @@ import ast.True;
 import ast.Type;
 import ast.VarDecl;
 import ast.While;
+import symboltable.Class;
+import symboltable.Method;
 
 public class TypeCheckVisitor implements TypeVisitor {
 
 	private SymbolTable symbolTable;
+	private Class currentClass;
+	private Method currentMethod;
 
-	TypeCheckVisitor(SymbolTable st) {
+	public TypeCheckVisitor(SymbolTable st) {
 		symbolTable = st;
 	}
 
@@ -69,12 +77,18 @@ public class TypeCheckVisitor implements TypeVisitor {
 	// MethodDeclList ml;
 	public Type visit(ClassDeclSimple n) {
 		n.i.accept(this);
+		
+		this.currentClass = this.symbolTable.getClass(n.i.s);
+		this.currentMethod = null;
+		
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
 		}
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		this.currentClass = null;
 		return null;
 	}
 
@@ -85,12 +99,18 @@ public class TypeCheckVisitor implements TypeVisitor {
 	public Type visit(ClassDeclExtends n) {
 		n.i.accept(this);
 		n.j.accept(this);
+		
+		this.currentClass = this.symbolTable.getClass(n.i.s);
+		this.currentMethod = null;
+		
 		for (int i = 0; i < n.vl.size(); i++) {
 			n.vl.elementAt(i).accept(this);
 		}
 		for (int i = 0; i < n.ml.size(); i++) {
 			n.ml.elementAt(i).accept(this);
 		}
+		
+		this.currentClass = null;
 		return null;
 	}
 
@@ -111,6 +131,9 @@ public class TypeCheckVisitor implements TypeVisitor {
 	public Type visit(MethodDecl n) {
 		n.t.accept(this);
 		n.i.accept(this);
+		
+		this.currentMethod = this.currentClass.getMethod(n.i.s);
+		
 		for (int i = 0; i < n.fl.size(); i++) {
 			n.fl.elementAt(i).accept(this);
 		}
@@ -120,7 +143,14 @@ public class TypeCheckVisitor implements TypeVisitor {
 		for (int i = 0; i < n.sl.size(); i++) {
 			n.sl.elementAt(i).accept(this);
 		}
-		n.e.accept(this);
+		
+		if (!n.e.accept(this).equals(n.t)) {
+			System.out.println();
+			throw new RuntimeException("Return expression type doesn't match method type in " + n.i.s);
+		}
+		
+		this.currentMethod = null;
+		
 		return null;
 	}
 
@@ -133,20 +163,20 @@ public class TypeCheckVisitor implements TypeVisitor {
 	}
 
 	public Type visit(IntArrayType n) {
-		return null;
+		return n;
 	}
 
 	public Type visit(BooleanType n) {
-		return null;
+		return n;
 	}
 
 	public Type visit(IntegerType n) {
-		return null;
+		return n;
 	}
 
 	// String s;
 	public Type visit(IdentifierType n) {
-		return null;
+		return n;
 	}
 
 	// StatementList sl;
@@ -160,7 +190,11 @@ public class TypeCheckVisitor implements TypeVisitor {
 	// Exp e;
 	// Statement s1,s2;
 	public Type visit(If n) {
-		n.e.accept(this);
+		if (!n.e.accept(this).equals(new BooleanType())) {
+			System.out.println();
+			throw new RuntimeException("Expected boolean on if expression");
+		}
+		
 		n.s1.accept(this);
 		n.s2.accept(this);
 		return null;
@@ -169,7 +203,11 @@ public class TypeCheckVisitor implements TypeVisitor {
 	// Exp e;
 	// Statement s;
 	public Type visit(While n) {
-		n.e.accept(this);
+		if (!n.e.accept(this).equals(new BooleanType())) {
+			System.out.println();
+			throw new RuntimeException("Expected boolean on while expression");
+		}
+		
 		n.s.accept(this);
 		return null;
 	}
@@ -184,120 +222,250 @@ public class TypeCheckVisitor implements TypeVisitor {
 	// Exp e;
 	public Type visit(Assign n) {
 		n.i.accept(this);
-		n.e.accept(this);
-		return null;
+		
+		Type varType = this.symbolTable.getVarType(this.currentMethod, this.currentClass, n.i.s);
+		if (!n.e.accept(this).equals(varType)) {
+			System.out.println();
+			throw new RuntimeException("Assigning " + n.e + " to " + varType + " variable");
+		}
+		
+		return varType;
 	}
 
 	// Identifier i;
 	// Exp e1,e2;
 	public Type visit(ArrayAssign n) {
 		n.i.accept(this);
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		
+		Type varType = this.symbolTable.getVarType(this.currentMethod, this.currentClass, n.i.s);
+		if (!varType.equals(new IntArrayType())) {
+			System.out.println();
+			throw new RuntimeException("Variable is not an integer array");
+		}
+		
+		if (!n.e1.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("Array index must be an integer");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("Array assignment expression must be an integer");
+		}
+		
+		return new IntegerType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(And n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new BooleanType())) {
+			System.out.println();
+			throw new RuntimeException("AND Logic operator item must be a boolean");
+		}
+		
+		if (!n.e2.accept(this).equals(new BooleanType())) {
+			System.out.println();
+			throw new RuntimeException("AND Logic operator item must be a boolean");
+		}
+		
+		return new BooleanType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(LessThan n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("< operator item must be an integer");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("< operator item must be an integer");
+		}
+		
+		return new BooleanType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(Plus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("+ operator item must be an integer");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("+ operator item must be an integer");
+		}
+		
+		return new IntegerType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(Minus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("- operator item must be an integer");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("- operator item must be an integer");
+		}
+		
+		return new IntegerType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(Times n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("* operator item must be an integer");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("* operator item must be an integer");
+		}
+		
+		return new IntegerType();
 	}
 
 	// Exp e1,e2;
 	public Type visit(ArrayLookup n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
+		if (!n.e1.accept(this).equals(new IntArrayType())) {
+			System.out.println();
+			throw new RuntimeException("Expression is not an integer array");
+		}
+		
+		if (!n.e2.accept(this).equals(new IntegerType())) {
+			System.out.println();
+			throw new RuntimeException("Array index must be an integer");
+		}
+	
+		return new IntegerType();
 	}
 
 	// Exp e;
 	public Type visit(ArrayLength n) {
-		n.e.accept(this);
-		return null;
+		if (!n.e.accept(this).equals(new IntArrayType())) {
+			System.out.println();
+			throw new RuntimeException("Expression is not an integer array");
+		}
+		
+		return new IntegerType();
 	}
 
 	// Exp e;
 	// Identifier i;
 	// ExpList el;
 	public Type visit(Call n) {
-		n.e.accept(this);
-		n.i.accept(this);
-		for (int i = 0; i < n.el.size(); i++) {
-			n.el.elementAt(i).accept(this);
+		Type receiverType = n.e.accept(this);
+		Variable receiverVar = null;
+		
+		if (receiverType instanceof IdentifierType) {
+			IdentifierExp iExp = (IdentifierExp) n.e;
+			
+			if (this.currentMethod != null) {
+				receiverVar = this.currentMethod.getVar(iExp.s);
+				
+				if (receiverVar == null) {
+					receiverVar = this.currentMethod.getParam(iExp.s);
+				}
+			}
+			if (receiverVar == null && this.currentClass != null) {
+				receiverVar = this.currentClass.getVar(iExp.s);
+			}
 		}
-		return null;
+		
+		Class receiverClass = null;
+		if (receiverVar != null && (receiverVar.type() instanceof IdentifierType)) {
+			IdentifierType receiverTypeId = (IdentifierType) receiverVar.type();
+			receiverClass = this.symbolTable.getClass(receiverTypeId.s);
+		}
+		
+		n.i.accept(this);
+		
+		Method receiverMethod = null;
+		if (receiverClass != null) {
+			receiverMethod = receiverClass.getMethod(n.i.s);
+		}
+
+		if (receiverMethod != null) {
+			for (int i = 0; i < n.el.size(); i++) {
+				Variable param = receiverMethod.getParamAt(i);
+				if (param == null) {
+					System.out.println();
+					throw new RuntimeException("Method call has more arguments than method declaration");
+				}
+				
+				Type argType = n.el.elementAt(i).accept(this);
+				if (!param.type().equals(argType)) {
+					System.out.println();
+					throw new RuntimeException("Method call argument #" + i + " does not match method declaration type");
+				}
+			}
+		}
+		
+		if (receiverMethod != null) {
+			return receiverMethod.type();
+		}
+		else {
+			return null;
+		}
 	}
 
 	// int i;
 	public Type visit(IntegerLiteral n) {
-		return null;
+		return new IntegerType();
 	}
 
 	public Type visit(True n) {
-		return null;
+		return new BooleanType();
 	}
 
 	public Type visit(False n) {
-		return null;
+		return new BooleanType();
 	}
 
 	// String s;
 	public Type visit(IdentifierExp n) {
-		return null;
+		return this.symbolTable.getVarType(this.currentMethod, this.currentClass, n.s);
+		//return new IdentifierType(n.s);
 	}
 
 	public Type visit(This n) {
-		return null;
+		if (this.currentClass != null) {
+			return this.currentClass.type();
+		}
+		else {
+			throw new RuntimeException("`this` is undefined in this scope");
+		}
 	}
 
 	// Exp e;
 	public Type visit(NewArray n) {
 		n.e.accept(this);
-		return null;
+		return new IntArrayType();
 	}
 
 	// Identifier i;
 	public Type visit(NewObject n) {
-		return null;
+		return new IdentifierType(n.i.s);
 	}
 
 	// Exp e;
 	public Type visit(Not n) {
-		n.e.accept(this);
-		return null;
+		if (!n.e.accept(this).equals(new BooleanType())) {
+			System.out.println();
+			throw new RuntimeException("NOT Logic operator item must be a boolean");
+		}
+		
+		return new BooleanType();
 	}
 
 	// String s;
 	public Type visit(Identifier n) {
-		return null;
+		return new IdentifierType(n.s);
 	}
 }

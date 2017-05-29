@@ -10,4 +10,9 @@ public class IntArrayType extends Type {
   public Type accept(TypeVisitor v) {
     return v.visit(this);
   }
+  
+  @Override
+  public boolean equals(Object obj) {
+	return super.equals(obj) || obj instanceof IntArrayType;
+  }
 }
